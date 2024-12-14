@@ -67,8 +67,8 @@ analysis_task = Task(
         "deficiencies, and recommending improvements for better software quality."
     ),
     expected_output="Test analysis report in PDF format with insights on test coverage, issues, and recommendations.",
-    async_execution=False,  # Indicating the task will not be asynchronous
-    output_file='analysis_report.pdf',  # The output will be saved as a PDF file
+    async_execution=False, 
+    output_file='analysis_report.pdf',  
     allow_delegation=True,
     agent=qa_analyzer,
 )
@@ -84,10 +84,10 @@ def generate_pdf_report(feature):
     pdf.cell(200, 10, txt=f"Test Analysis Report for {feature}", ln=True, align="C")
 
     # Add some content to the PDF (example insights)
-    pdf.ln(10)  # Line break
+    pdf.ln(10)  
     pdf.multi_cell(0, 10, txt=f"Insights and analysis for {feature}: This is where the detailed analysis would go.")
 
-    # Save the PDF to a file
+  
     pdf.output("analysis_report.pdf")
 
     return "PDF report generated successfully."
@@ -101,7 +101,7 @@ def execute_test_script_on_server(feature, url="http://3.83.24.72:8000/"):
     try:
         # You may need to adjust this endpoint based on the application's API
         response = requests.post(
-            f"{url}/execute-test",  # Replace '/execute-test' with the actual endpoint for running tests
+            f"{url}/execute-test",  
             json={'feature': feature},
             auth=(credentials['user'], credentials['password']),
             headers=headers
