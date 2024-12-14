@@ -1,6 +1,6 @@
 from crewai import Crew, Process
-from agents import qa_planner, qa_coder, qa_executor, qa_analyzer
-from tasks import planning_task, coding_task, execution_task, analysis_task
+from agents import qa_planner, qa_coder, qa_executor, qa_analyzer, feature_analyzer
+from tasks import planning_task, coding_task, execution_task, analysis_task, feature_task
 
 qa_crew = Crew(
     agents=[qa_planner, qa_coder, qa_executor, qa_analyzer],
@@ -12,13 +12,53 @@ qa_crew = Crew(
     share_crew=True
 )
 
-def qa_automation_pipeline_with_crew(feature, document_path):
-    print(f"\n=== Starting QA Automation for Feature: {feature} ===")
-    result = qa_crew.kickoff(inputs={'feature': feature, 'document_path': document_path})
+def extract_features_from_document(document_path):
+    # Extract features using the feature_analyzer agent
+    print("\n=== Extracting Features from Document ===")
+    crew = Crew(
+        agents=[feature_analyzer],
+        tasks=[feature_task],  # Assuming you define analysis_task based on analysis_tool
+        process=Process.sequential,  # Sequential process ensures tasks are executed in order
+        memory=False,
+        cache=False,
+        max_rpm=100,
+        share_crew=True
+    )
+    
+    # Execute the task with the document
+    result = crew.kickoff(inputs={'document_path': document_path})
+    
+    print("Results from feature extraction:", result)
+    # Assuming the agent returns features as a dictionary in the format you provided
+    # features = result.get("features", {})
+    return result
+
+def execute_test_for_all_features(features, document_path):
+    # Iterate over all features (from the nested JSON structure) and trigger the test
+    print("\n=== Starting Automated Testing for Extracted Features ===")
+    
+    results = []
+    
+    print(f"\n=== Starting Test for Feature: {features} ===")
+    result = qa_crew.kickoff(inputs={'feature': features, 'document_path': document_path})
+    results.append(result)
+    
+    # Save the results in a report file
     with open("test_report.txt", "w") as report:
-        report.write(result)
+        for feature, result in zip([f"{cat} - {ft}" for cat in features for ft in features[cat].keys()], results):
+            report.write(f"Feature: {feature}\nResult: {result}\n\n")
     print("\n=== Test Report Generated ===")
 
 # Example Run
 if __name__ == "__main__":
-    qa_automation_pipeline_with_crew(feature="Login Functionality", document_path="BRD - HRMS.pdf")
+    document_path = "BRD - HRMS.pdf"
+    
+    # Step 1: Extract features from the document (JSON structure with nested categories)
+    features = extract_features_from_document(document_path)
+    print(type(features))
+    
+    # Step 2: Execute tests for each feature
+    if features:
+        execute_test_for_all_features(features, document_path)
+    else:
+        print("No features extracted from the document.")

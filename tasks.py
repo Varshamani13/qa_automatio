@@ -1,16 +1,34 @@
 from crewai import Task
-from tools import document_ingestor_tool, execution_tool, directory_tool, analysis_tool
-from agents import qa_analyzer, qa_coder, qa_executor, qa_planner
+from tools import document_ingestor_tool, execution_tool, directory_tool, analysis_tool,pdf_search_tool
+from agents import qa_analyzer, qa_coder, qa_executor, qa_planner,feature_analyzer,coding_agent
 from fpdf import FPDF
 import requests
 
+
+
+# Task: Analysis
+feature_task = Task(
+    name='Analysis Task',
+    description='Analyze the given document and extract the features to be tested.',
+    tools=[pdf_search_tool],
+    verbose=True,
+    memory=False,
+    backstory=(
+        "An analytical thinker skilled in interpreting test results, identifying "
+        "deficiencies, and recommending improvements for better software quality."
+    ),
+    expected_output="A dictionary containing the extracted features from the document.key must be features",
+   
+    allow_delegation=True,
+    agent=feature_analyzer,
+)
 
 # Task: Planning
 planning_task = Task(
     name='Planning Task',
     description='Analyze BRD document and strategize testing approach.',
-    tools=[document_ingestor_tool],
-    execution_function=lambda inputs: f"Parsed and planned testing for {inputs['feature']}.",
+    tools=[pdf_search_tool],
+    execution_function=lambda inputs: f"Parsed and planned testing for {inputs['features']}.",
     backstory=(
         "An experienced QA strategist skilled in creating comprehensive testing "
         "plans, ensuring coverage for functionality, performance, and edge cases."
@@ -21,28 +39,36 @@ planning_task = Task(
 )
 
 # Task: Coding
+# coding_task = Task(
+#     name='Coding Task',
+#     description='Generate automated test scripts based on user stories.',
+#     tools=[execution_tool],
+#     execution_function=lambda inputs: f"Generated test scripts for {inputs['features']}.",
+#     verbose=True,
+#     memory=True,
+#     backstory=(
+#         "An automation expert specializing in writing robust test scripts that "
+#         "cover various scenarios, ensuring compatibility with modern frameworks."
+#     ),
+#     expected_output="Automated test scripts covering functional and edge case scenarios.",
+#     allow_delegation=True,
+#     agent=qa_coder,
+# )
 coding_task = Task(
-    name='Coding Task',
-    description='Generate automated test scripts based on user stories.',
-    tools=[execution_tool],
-    execution_function=lambda inputs: f"Generated test scripts for {inputs['feature']}.",
-    verbose=True,
-    memory=True,
+    description="Generate automated test scripts based on {features}",
+    agent=coding_agent,
     backstory=(
         "An automation expert specializing in writing robust test scripts that "
         "cover various scenarios, ensuring compatibility with modern frameworks."
     ),
     expected_output="Automated test scripts covering functional and edge case scenarios.",
-    allow_delegation=True,
-    agent=qa_coder,
 )
-
 # Task: Execution
 execution_task = Task(
     name='Execution Task',
     description='Set up environment and execute test scripts.',
     tools=[execution_tool],
-    execution_function=lambda inputs: execute_test_script_on_server(inputs['feature']),
+    execution_function=lambda inputs: execute_test_script_on_server(inputs['features']),
     verbose=True,
     memory=True,
     backstory=(
@@ -59,7 +85,7 @@ analysis_task = Task(
     name='Analysis Task',
     description='Analyze test results and provide insights.',
     tools=[analysis_tool],
-    execution_function=lambda inputs: generate_pdf_report(inputs['feature']),
+    execution_function=lambda inputs: generate_pdf_report(inputs['features']),
     verbose=True,
     memory=True,
     backstory=(
