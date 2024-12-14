@@ -17,8 +17,8 @@ def extract_features_from_document(document_path):
     print("\n=== Extracting Features from Document ===")
     crew = Crew(
         agents=[feature_analyzer],
-        tasks=[feature_task],  # Assuming you define analysis_task based on analysis_tool
-        process=Process.sequential,  # Sequential process ensures tasks are executed in order
+        tasks=[feature_task], 
+        process=Process.sequential,  
         memory=False,
         cache=False,
         max_rpm=100,
@@ -29,12 +29,11 @@ def extract_features_from_document(document_path):
     result = crew.kickoff(inputs={'document_path': document_path})
     
     print("Results from feature extraction:", result)
-    # Assuming the agent returns features as a dictionary in the format you provided
-    # features = result.get("features", {})
+  
     return result
 
 def execute_test_for_all_features(features, document_path):
-    # Iterate over all features (from the nested JSON structure) and trigger the test
+   
     print("\n=== Starting Automated Testing for Extracted Features ===")
     
     results = []
@@ -43,13 +42,13 @@ def execute_test_for_all_features(features, document_path):
     result = qa_crew.kickoff(inputs={'feature': features, 'document_path': document_path})
     results.append(result)
     
-    # Save the results in a report file
+ 
     with open("test_report.txt", "w") as report:
         for feature, result in zip([f"{cat} - {ft}" for cat in features for ft in features[cat].keys()], results):
             report.write(f"Feature: {feature}\nResult: {result}\n\n")
     print("\n=== Test Report Generated ===")
 
-# Example Run
+
 if __name__ == "__main__":
     document_path = "BRD - HRMS.pdf"
     

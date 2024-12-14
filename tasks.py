@@ -100,16 +100,15 @@ analysis_task = Task(
 )
 
 def generate_pdf_report(feature):
-    # Create a PDF object
+   
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Set title and content
+ 
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, txt=f"Test Analysis Report for {feature}", ln=True, align="C")
 
-    # Add some content to the PDF (example insights)
     pdf.ln(10)  
     pdf.multi_cell(0, 10, txt=f"Insights and analysis for {feature}: This is where the detailed analysis would go.")
 
@@ -123,9 +122,8 @@ def execute_test_script_on_server(feature, url="http://3.83.24.72:8000/"):
     credentials = {'user': 'user', 'password': 'letuserpass'}
     headers = {'Content-Type': 'application/json'}
     
-    # Send a POST request to the server to authenticate and trigger the execution
     try:
-        # You may need to adjust this endpoint based on the application's API
+       
         response = requests.post(
             f"{url}/execute-test",  
             json={'feature': feature},
@@ -133,7 +131,6 @@ def execute_test_script_on_server(feature, url="http://3.83.24.72:8000/"):
             headers=headers
         )
         
-        # Check for success
         if response.status_code == 200:
             return f"Test execution triggered successfully for {feature}."
         else:

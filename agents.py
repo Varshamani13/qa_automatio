@@ -2,7 +2,7 @@ from crewai import Agent
 from tools import directory_tool, document_ingestor_tool, execution_tool, analysis_tool,pdf_search_tool
 from dotenv import load_dotenv
 
-# Load environment variables
+
 load_dotenv()
 import os
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
