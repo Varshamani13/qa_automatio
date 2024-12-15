@@ -1,10 +1,17 @@
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from crewai import Crew, Process
 from agents import qa_planner, qa_coder, qa_executor, qa_analyzer, feature_analyzer
 from tasks import planning_task, coding_task, execution_task, analysis_task, feature_task
+import os
+import shutil
+import uvicorn
 
+app = FastAPI()
+
+# Initialize the QA Crew
 qa_crew = Crew(
-    agents=[qa_planner, qa_coder, qa_executor, qa_analyzer],
-    tasks=[planning_task, coding_task, execution_task, analysis_task],
+    agents=[feature_analyzer, qa_planner, qa_coder, qa_executor, qa_analyzer],
+    tasks=[feature_task, planning_task, coding_task, execution_task, analysis_task],
     process=Process.sequential,
     memory=True,
     cache=True,
@@ -12,52 +19,52 @@ qa_crew = Crew(
     share_crew=True
 )
 
-def extract_features_from_document(document_path):
-    # Extract features using the feature_analyzer agent
-    print("\n=== Extracting Features from Document ===")
-    crew = Crew(
-        agents=[feature_analyzer],
-        tasks=[feature_task], 
-        process=Process.sequential,  
-        memory=False,
-        cache=False,
-        max_rpm=100,
-        share_crew=True
-    )
-    
-    # Execute the task with the document
-    result = crew.kickoff(inputs={'document_path': document_path})
-    
-    print("Results from feature extraction:", result)
-  
-    return result
+# Directory to store uploaded files
+UPLOAD_DIR = "uploaded_documents"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-def execute_test_for_all_features(features, document_path):
-   
-    print("\n=== Starting Automated Testing for Extracted Features ===")
-    
-    results = []
-    
-    print(f"\n=== Starting Test for Feature: {features} ===")
-    result = qa_crew.kickoff(inputs={'feature': features, 'document_path': document_path})
-    results.append(result)
-    
- 
-    with open("test_report.txt", "w") as report:
-        for feature, result in zip([f"{cat} - {ft}" for cat in features for ft in features[cat].keys()], results):
-            report.write(f"Feature: {feature}\nResult: {result}\n\n")
-    print("\n=== Test Report Generated ===")
+@app.post("/upload-and-test")
+async def upload_and_test(file: UploadFile = File(...)):
+    """
+    Upload a document, extract features, and run tests on it.
+    """
+    try:
+        # Save uploaded file to the server
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        print(f"Uploaded file saved to: {file_path}")
+
+        # Step 1: Extract features from the document
+        print("\n=== Extracting Features from Document ===")
+        feature_result = qa_crew.kickoff(inputs={"document_path": file_path})
+
+        if not feature_result:
+            raise HTTPException(status_code=500, detail="Feature extraction failed.")
+
+        print("Features extracted successfully.")
+
+        # Step 2: Execute tests for all extracted features
+        print("\n=== Starting Automated Testing ===")
+        test_results = qa_crew.kickoff(inputs={"document_path": file_path})
+
+        # Save test results to a report file
+        report_path = os.path.join(UPLOAD_DIR, "test_report.txt")
+        with open(report_path, "w") as report:
+            report.write(f"Test Results:\n{test_results}\n")
+
+        print(f"Test report generated at: {report_path}")
+
+        return {
+            "message": "Testing completed successfully.",
+            "test_report_path": report_path,
+        }
+
+    except Exception as e:
+        print(f"Error during processing: {e}")
+        raise HTTPException(status_code=500, detail="An error occurred during processing.")
 
 
 if __name__ == "__main__":
-    document_path = "BRD - HRMS.pdf"
-    
-    # Step 1: Extract features from the document (JSON structure with nested categories)
-    features = extract_features_from_document(document_path)
-    print(type(features))
-    
-    # Step 2: Execute tests for each feature
-    if features:
-        execute_test_for_all_features(features, document_path)
-    else:
-        print("No features extracted from the document.")
+    uvicorn.run("crew:app", host="0.0.0.0", port=8000)

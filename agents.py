@@ -12,12 +12,12 @@ os.environ["OPENAI_MODEL_NAME"] = "gpt-4-0125-preview"
 document_path="BRD - HRMS.pdf"
 feature_analyzer = Agent(
     role='features extractor',
-    goal='Analyze the document and extract features to be tested in a structured format.',
+    goal='Analyze the document and extract features to be tested.',
     verbose=True,
     memory=False,
     backstory=(
         "An analytical expert proficient in understanding technical documents, extracting key "
-        "features and requirements, and structuring them in a way that they can be used for test automation."
+        "features and requirements,  that they can be used for test automation."
     ),
     tools=[pdf_search_tool],  
     allow_delegation=True,
@@ -26,7 +26,7 @@ feature_analyzer = Agent(
 # QA Planner Agent
 qa_planner = Agent(
     role='QA Planner',
-    goal='Analyze requirements and strategize the testing approach for {feature}.',
+    goal='Analyze requirements and strategize the testing approach the features.',
     verbose=True,
     memory=True,
     backstory=(
@@ -51,9 +51,9 @@ qa_planner = Agent(
 #     allow_delegation=False,
 # )
 
-coding_agent = Agent(
+qa_coder = Agent(
     role="Senior Python Developer",
-    goal="Craft well-designed and thought-out code for testing each feature in the application {feature}",
+    goal="Craft well-designed and thought-out code for testing each feature in the application",
     backstory="You are a senior Python developer with extensive experience in software architecture and best practices for writing automated code for testing",
     allow_code_execution=True
 )
@@ -61,7 +61,7 @@ coding_agent = Agent(
 # QA Executor Agent
 qa_executor = Agent(
     role='QA Executor',
-    goal='Set up the testing environment and execute test scripts for {feature}.',
+    goal='Set up the testing environment and execute test scripts.',
     verbose=True,
     memory=True,
     backstory=(
@@ -75,7 +75,7 @@ qa_executor = Agent(
 # QA Analyzer Agent
 qa_analyzer = Agent(
     role='QA Analyzer',
-    goal='Evaluate test execution logs and provide insights for {feature}.',
+    goal='Add all the testcase and results from executor.Evaluate test execution logs and provide insights for .',
     verbose=True,
     memory=True,
     backstory=(

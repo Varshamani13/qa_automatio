@@ -1,6 +1,6 @@
 from crewai import Task
 from tools import document_ingestor_tool, execution_tool, directory_tool, analysis_tool,pdf_search_tool
-from agents import qa_analyzer, qa_coder, qa_executor, qa_planner,feature_analyzer,coding_agent
+from agents import qa_analyzer, qa_coder, qa_executor, qa_planner,feature_analyzer
 from fpdf import FPDF
 import requests
 
@@ -12,12 +12,12 @@ feature_task = Task(
     description='Analyze the given document and extract the features to be tested.',
     tools=[pdf_search_tool],
     verbose=True,
-    memory=False,
+    memory=True,
     backstory=(
         "An analytical thinker skilled in interpreting test results, identifying "
         "deficiencies, and recommending improvements for better software quality."
     ),
-    expected_output="A dictionary containing the extracted features from the document.key must be features",
+    expected_output="the extracted features from the document.the type of output should be in string",
    
     allow_delegation=True,
     agent=feature_analyzer,
@@ -28,7 +28,7 @@ planning_task = Task(
     name='Planning Task',
     description='Analyze BRD document and strategize testing approach.',
     tools=[pdf_search_tool],
-    execution_function=lambda inputs: f"Parsed and planned testing for {inputs['features']}.",
+ 
     backstory=(
         "An experienced QA strategist skilled in creating comprehensive testing "
         "plans, ensuring coverage for functionality, performance, and edge cases."
@@ -55,8 +55,8 @@ planning_task = Task(
 #     agent=qa_coder,
 # )
 coding_task = Task(
-    description="Generate automated test scripts based on {features}",
-    agent=coding_agent,
+    description="Generate automated test scripts based on features",
+    agent=qa_coder,
     backstory=(
         "An automation expert specializing in writing robust test scripts that "
         "cover various scenarios, ensuring compatibility with modern frameworks."
@@ -68,7 +68,7 @@ execution_task = Task(
     name='Execution Task',
     description='Set up environment and execute test scripts.',
     tools=[execution_tool],
-    execution_function=lambda inputs: execute_test_script_on_server(inputs['features']),
+  
     verbose=True,
     memory=True,
     backstory=(
